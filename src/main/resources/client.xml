@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ClientProvider">
+    <resultMap id="clientResult" type="com.vaadin.demo.dashboard.domain.Client" autoMapping="true"/>
+    <resultMap id="statusResult" type="com.vaadin.demo.dashboard.domain.ClientStatus" autoMapping="true"/>
+    <resultMap id="statusHistoryResult" type="com.vaadin.demo.dashboard.domain.ClientStatusHistory" autoMapping="true"/>
+
+    <select id="getRecentClients" parameterType="int" resultMap="clientResult">
+        SELECT * FROM Clients ORDER BY id DESC LIMIT #{count}
+    </select>
+
+    <select id="getAllStatuses"  resultMap="statusResult">
+        SELECT * FROM StatusDictionary ORDER BY id ASC
+    </select>
+
+    <select id="getStatusesForClient"  resultMap="statusHistoryResult" parameterType="com.vaadin.demo.dashboard.domain.User">
+        SELECT sh.id, sh.timestamp, sd.name, sd.id as statusid, sh.description, sh.clientid FROM StatusHistory as sh LEFT OUTER JOIN StatusDictionary as sd ON sh.statusid=sd.id WHERE sh.clientid=#{id} ORDER BY sh.timestamp DESC
+    </select>
+
+    <insert id="updateClientStatus" useGeneratedKeys="true"
+            keyProperty="id" parameterType="com.vaadin.demo.dashboard.domain.ClientStatusHistory">
+       INSERT INTO StatusHistory (statusid, clientid, description) VALUES (#{statusid}, #{clientid}, #{description})
+    </insert>
+</mapper>

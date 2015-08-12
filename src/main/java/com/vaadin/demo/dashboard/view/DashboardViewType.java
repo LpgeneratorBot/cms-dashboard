@@ -10,8 +10,8 @@ import com.vaadin.server.Resource;
 public enum DashboardViewType {
 
     DASHBOARD("Домашняя", DashboardView.class, FontAwesome.HOME, true),
-    TRANSACTIONS("Клиенты", ClientsView.class, FontAwesome.TABLE, false),
-    REPORTS("Договоры", ReportsView.class, FontAwesome.FILE_TEXT_O, true);
+    TRANSACTIONS("Клиенты", ClientsView.class, FontAwesome.TABLE, false);
+//    REPORTS("Договоры", ReportsView.class, FontAwesome.FILE_TEXT_O, true);
 
     private final String viewName;
     private final Class<? extends View> viewClass;

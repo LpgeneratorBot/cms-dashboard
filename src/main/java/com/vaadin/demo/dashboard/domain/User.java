@@ -1,17 +1,26 @@
 package com.vaadin.demo.dashboard.domain;
 
 public final class User {
+
+    public static final User NULL_USER = new User();
+
+    private int id;
     private String role;
     private String firstName;
     private String lastName;
-    private String title;
-    private boolean male;
     private String email;
     private String location;
     private String phone;
-    private Integer newsletterSubscription;
-    private String website;
-    private String bio;
+    private String login;
+    private String password;
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public String getEmail() {
         return email;
@@ -35,46 +44,6 @@ public final class User {
 
     public void setPhone(final String phone) {
         this.phone = phone;
-    }
-
-    public Integer getNewsletterSubscription() {
-        return newsletterSubscription;
-    }
-
-    public void setNewsletterSubscription(final Integer newsletterSubscription) {
-        this.newsletterSubscription = newsletterSubscription;
-    }
-
-    public String getWebsite() {
-        return website;
-    }
-
-    public void setWebsite(final String website) {
-        this.website = website;
-    }
-
-    public String getBio() {
-        return bio;
-    }
-
-    public void setBio(final String bio) {
-        this.bio = bio;
-    }
-
-    public boolean isMale() {
-        return male;
-    }
-
-    public void setMale(final boolean male) {
-        this.male = male;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(final String title) {
-        this.title = title;
     }
 
     public String getRole() {
@@ -101,4 +70,34 @@ public final class User {
         this.lastName = lastName;
     }
 
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getLogin() {
+        return login;
+    }
+
+    public void setLogin(String login) {
+        this.login = login;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", role='" + role + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", email='" + email + '\'' +
+                ", location='" + location + '\'' +
+                ", phone='" + phone + '\'' +
+                ", login='" + login + '\'' +
+                ", password='" + password + '\'' +
+                '}';
+    }
 }

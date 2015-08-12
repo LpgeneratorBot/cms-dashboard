@@ -1,6 +1,5 @@
 package com.vaadin.demo.dashboard.view.transactions;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Collections;
@@ -54,12 +53,8 @@ import com.vaadin.ui.themes.ValoTheme;
 public final class ClientsView extends VerticalLayout implements View {
 
     private final Table table;
-    private Button createReport;
-    private static final DateFormat DATEFORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+    private Button btEditClient;
     private static final String[] DEFAULT_COLLAPSIBLE = {"date", "name", "city", "phone", "email", "status"};
-
-    // ContactForm is an example of a custom component class
-    private ClientForm clientForm = new ClientForm();
 
     private Client selectedClient;
 
@@ -73,8 +68,6 @@ public final class ClientsView extends VerticalLayout implements View {
         table = buildTable();
         addComponent(table);
         setExpandRatio(table, 1);
-        addComponent(clientForm);
-        clientForm.setVisible(false);
     }
 
     @Override
@@ -97,9 +90,9 @@ public final class ClientsView extends VerticalLayout implements View {
         title.addStyleName(ValoTheme.LABEL_NO_MARGIN);
         header.addComponent(title);
 
-        createReport = buildCreateReport();
+        btEditClient = editClient();
         HorizontalLayout tools = new HorizontalLayout(buildFilter(),
-                createReport);
+                btEditClient);
         tools.setSpacing(true);
         tools.addStyleName("toolbar");
         header.addComponent(tools);
@@ -107,18 +100,20 @@ public final class ClientsView extends VerticalLayout implements View {
         return header;
     }
 
-    private Button buildCreateReport() {
-        final Button createReport = new Button("Редактировать");
-        createReport.setDescription("Редактирует выбранного клиента");
-        createReport.addClickListener(new ClickListener() {
+    private Button editClient() {
+        final Button editClient = new Button("Редактировать");
+        editClient.setDescription("Редактирует выбранного клиента");
+        editClient.addClickListener(new ClickListener() {
             @Override
             public void buttonClick(final ClickEvent event) {
-                clientForm.edit(selectedClient);
-                clientForm.setVisible(true);
+                // ContactForm is an example of a custom component class
+                ClientWindow clientForm = new ClientWindow(selectedClient);
+                UI.getCurrent().addWindow(clientForm);
+                clientForm.focus();
             }
         });
-        createReport.setEnabled(false);
-        return createReport;
+        editClient.setEnabled(false);
+        return editClient;
     }
 
     private Component buildFilter() {
@@ -183,7 +178,7 @@ public final class ClientsView extends VerticalLayout implements View {
                 String result = super.formatPropertyValue(rowId, colId,
                         property);
                 if (colId.equals("date")) {
-                    result = DATEFORMAT.format(((Date) property.getValue()));
+                    result = new SimpleDateFormat("dd/MM/yyyy").format(((Date) property.getValue()));
                 }
                 return result;
             }
@@ -197,7 +192,7 @@ public final class ClientsView extends VerticalLayout implements View {
         table.setColumnCollapsingAllowed(true);
         table.setColumnReorderingAllowed(true);
         table.setContainerDataSource(new TempTransactionsContainer(DashboardUI
-                .getDataProvider().getRecentTransactions(20)));
+                .getDataProvider().getRecentClients(20)));
         table.setSortContainerPropertyId("date");
         table.setSortAscending(false);
 
@@ -217,7 +212,7 @@ public final class ClientsView extends VerticalLayout implements View {
             public void valueChange(final ValueChangeEvent event) {
                 if (table.getValue() instanceof Set) {
                     Set<Object> val = (Set<Object>) table.getValue();
-                    createReport.setEnabled(val.size() > 0);
+                    btEditClient.setEnabled(val.size() > 0);
                 }
             }
         });

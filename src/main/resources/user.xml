@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="UserProvider">
+    <resultMap id="result" type="com.vaadin.demo.dashboard.domain.User" autoMapping="true"/>
+    <select id="selectByLogin" parameterType="String" resultMap="result">
+        SELECT * FROM Users WHERE login = #{login}
+    </select>
+    <update
+            id="updateUser"
+            parameterType="com.vaadin.demo.dashboard.domain.User"
+            flushCache="true"
+            statementType="PREPARED"
+            timeout="20"
+            >
+            update Users set
+              lastName = #{lastName},
+              firstName = #{firstName},
+              email = #{email},
+              phone = #{phone},
+              location = #{location},
+              password =#{password}
+              where id = #{id}
+            </update>
+</mapper>

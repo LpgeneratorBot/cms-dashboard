@@ -1,36 +1,25 @@
 package com.vaadin.demo.dashboard.data;
 
+import com.vaadin.demo.dashboard.domain.Client;
+import com.vaadin.demo.dashboard.domain.ClientStatus;
+import com.vaadin.demo.dashboard.domain.ClientStatusHistory;
+import com.vaadin.demo.dashboard.domain.DashboardNotification;
+import com.vaadin.demo.dashboard.domain.User;
+
 import java.util.Collection;
 import java.util.Date;
-
-import com.vaadin.demo.dashboard.domain.DashboardNotification;
-import com.vaadin.demo.dashboard.domain.Movie;
-import com.vaadin.demo.dashboard.domain.MovieRevenue;
-import com.vaadin.demo.dashboard.domain.Client;
-import com.vaadin.demo.dashboard.domain.User;
 
 /**
  * QuickTickets Dashboard backend API.
  */
 public interface DataProvider {
-    /**
+
+     /**
      * @param count
      *            Number of transactions to fetch.
      * @return A Collection of most recent transactions.
      */
-    Collection<Client> getRecentTransactions(int count);
-
-    /**
-     * @param id
-     *            Movie identifier.
-     * @return A Collection of daily revenues for the movie.
-     */
-    Collection<MovieRevenue> getDailyRevenuesByMovie(long id);
-
-    /**
-     * @return Total revenues for each listed movie.
-     */
-    Collection<MovieRevenue> getTotalMovieRevenues();
+    Collection<Client> getRecentClients(int count);
 
     /**
      * @param userName
@@ -38,6 +27,14 @@ public interface DataProvider {
      * @return Authenticated used.
      */
     User authenticate(String userName, String password);
+
+    boolean updateUser(User user);
+
+    Collection<ClientStatus> getAllStatuses();
+
+    Collection<ClientStatusHistory> getStatusesForClient(Client client);
+
+    boolean updateClientStatus(ClientStatusHistory status);
 
     /**
      * @return The number of unread notifications for the current user.
@@ -48,23 +45,6 @@ public interface DataProvider {
      * @return Notifications for the current user.
      */
     Collection<DashboardNotification> getNotifications();
-
-    /**
-     * @return The total summed up revenue of sold movie tickets
-     */
-    double getTotalSum();
-
-    /**
-     * @return A Collection of movies.
-     */
-    Collection<Movie> getMovies();
-
-    /**
-     * @param movieId
-     *            Movie's identifier
-     * @return A Movie instance for the given id.
-     */
-    Movie getMovie(long movieId);
 
     /**
      * @param startDate
