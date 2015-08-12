@@ -2,15 +2,16 @@ package com.vaadin.demo.dashboard.view;
 
 import com.vaadin.demo.dashboard.view.dashboard.DashboardView;
 import com.vaadin.demo.dashboard.view.reports.ReportsView;
-import com.vaadin.demo.dashboard.view.transactions.TransactionsView;
+import com.vaadin.demo.dashboard.view.transactions.ClientsView;
 import com.vaadin.navigator.View;
 import com.vaadin.server.FontAwesome;
 import com.vaadin.server.Resource;
 
 public enum DashboardViewType {
-    DASHBOARD("dashboard", DashboardView.class, FontAwesome.HOME, true),
-    TRANSACTIONS("transactions", TransactionsView.class, FontAwesome.TABLE, false),
-    REPORTS("reports", ReportsView.class, FontAwesome.FILE_TEXT_O, true);
+
+    DASHBOARD("Домашняя", DashboardView.class, FontAwesome.HOME, true),
+    TRANSACTIONS("Клиенты", ClientsView.class, FontAwesome.TABLE, false),
+    REPORTS("Договоры", ReportsView.class, FontAwesome.FILE_TEXT_O, true);
 
     private final String viewName;
     private final Class<? extends View> viewClass;

@@ -5,7 +5,7 @@ import java.util.Collection;
 import com.google.common.eventbus.Subscribe;
 import com.vaadin.demo.dashboard.DashboardUI;
 import com.vaadin.demo.dashboard.component.ProfilePreferencesWindow;
-import com.vaadin.demo.dashboard.domain.Transaction;
+import com.vaadin.demo.dashboard.domain.Client;
 import com.vaadin.demo.dashboard.domain.User;
 import com.vaadin.demo.dashboard.event.DashboardEvent.NotificationsCountUpdatedEvent;
 import com.vaadin.demo.dashboard.event.DashboardEvent.PostViewChangeEvent;
@@ -170,7 +170,7 @@ public final class DashboardMenu extends CustomComponent {
                         Table table = (Table) event.getTransferable()
                                 .getSourceComponent();
                         DashboardEventBus.post(new TransactionReportEvent(
-                                (Collection<Transaction>) table.getValue()));
+                                (Collection<Client>) table.getValue()));
                     }
 
                     @Override

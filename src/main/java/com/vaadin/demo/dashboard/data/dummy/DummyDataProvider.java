@@ -3,20 +3,16 @@ package com.vaadin.demo.dashboard.data.dummy;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -27,10 +23,8 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -38,30 +32,26 @@ import com.vaadin.demo.dashboard.data.DataProvider;
 import com.vaadin.demo.dashboard.domain.DashboardNotification;
 import com.vaadin.demo.dashboard.domain.Movie;
 import com.vaadin.demo.dashboard.domain.MovieRevenue;
-import com.vaadin.demo.dashboard.domain.Transaction;
+import com.vaadin.demo.dashboard.domain.Client;
 import com.vaadin.demo.dashboard.domain.User;
-import com.vaadin.server.VaadinRequest;
-import com.vaadin.util.CurrentInstance;
 
 /**
  * A dummy implementation for the backend API.
  */
 public class DummyDataProvider implements DataProvider {
 
-    // TODO: Get API key from http://developer.rottentomatoes.com
-    private static final String ROTTEN_TOMATOES_API_KEY = null;
-
     /* List of countries and cities for them */
     private static Multimap<String, String> countryToCities;
     private static Date lastDataUpdate;
     private static Collection<Movie> movies;
-    private static Multimap<Long, Transaction> transactions;
+    private static Multimap<Long, Client> transactions;
     private static Multimap<Long, MovieRevenue> revenue;
 
     private static Random rand = new Random();
 
     private final Collection<DashboardNotification> notifications = DummyDataGenerator
             .randomNotifications();
+    private ArrayList<Client> clients;
 
     /**
      * Initialize the data for this application.
@@ -73,6 +63,29 @@ public class DummyDataProvider implements DataProvider {
             refreshStaticData();
             lastDataUpdate = new Date();
         }
+
+        clients = new ArrayList<Client>();
+
+        Client client = new Client();
+        client.setPhone("999999");
+        client.setEmail("i.@m.ru");
+        client.setName("Василий П");
+        client.setCity("Санкт-Петербург");
+        client.setStatus("Новый");
+        client.setId(1);
+        client.setDate(new Date());
+
+        Client client2 = new Client();
+        client2.setPhone("+7(904)512-93-41");
+        client2.setEmail("vasss@google.com");
+        client2.setName("Петро");
+        client2.setCity("Самара");
+        client2.setStatus("Не отвечает");
+        client2.setId(2);
+        client2.setDate(new Date());
+
+        clients.add(client);
+        clients.add(client2);
     }
 
     private void refreshStaticData() {
@@ -96,95 +109,9 @@ public class DummyDataProvider implements DataProvider {
      * Initialize the list of movies playing in theaters currently. Uses the
      * Rotten Tomatoes API to get the list. The result is cached to a local file
      * for 24h (daily limit of API calls is 10,000).
-     *
-     * @return
      */
     private static Collection<Movie> loadMoviesData() {
-
-        JsonObject json = null;
-        File cache;
-        VaadinRequest vaadinRequest = CurrentInstance.get(VaadinRequest.class);
-
-        File baseDirectory = vaadinRequest.getService().getBaseDirectory();
-        cache = new File(baseDirectory + "/movies.txt");
-
-        try {
-            if (cache.exists()
-                    && System.currentTimeMillis() < cache.lastModified()
-                            + (1000 * 60 * 60 * 24)) {
-                // Use cache if it's under 24h old
-                json = readJsonFromFile(cache);
-            } else {
-                if (ROTTEN_TOMATOES_API_KEY != null) {
-                    try {
-                        json = readJsonFromUrl("http://api.rottentomatoes.com/api/public/v1.0/lists/movies/in_theaters.json?page_limit=30&apikey="
-                                + ROTTEN_TOMATOES_API_KEY);
-                        // Store in cache
-                        FileWriter fileWriter = new FileWriter(cache);
-                        fileWriter.write(json.toString());
-                        fileWriter.close();
-                    } catch (Exception e) {
-                        json = readJsonFromFile(new File(baseDirectory
-                                + "/movies-fallback.txt"));
-                    }
-                } else {
-                    json = readJsonFromFile(new File(baseDirectory
-                            + "/movies-fallback.txt"));
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        Collection<Movie> result = new ArrayList<Movie>();
-        if (json != null) {
-            JsonArray moviesJson;
-
-            moviesJson = json.getAsJsonArray("movies");
-            for (int i = 0; i < moviesJson.size(); i++) {
-                JsonObject movieJson = moviesJson.get(i).getAsJsonObject();
-                JsonObject posters = movieJson.get("posters").getAsJsonObject();
-                if (!posters.get("profile").getAsString()
-                        .contains("poster_default")) {
-                    Movie movie = new Movie();
-                    movie.setId(i);
-                    movie.setTitle(movieJson.get("title").getAsString());
-                    try {
-                        movie.setDuration(movieJson.get("runtime").getAsInt());
-                    } catch (Exception e) {
-                        // No need to handle this exception
-                    }
-                    movie.setSynopsis(movieJson.get("synopsis").getAsString());
-                    movie.setThumbUrl(posters.get("profile").getAsString()
-                            .replace("_tmb", "_320"));
-                    movie.setPosterUrl(posters.get("detailed").getAsString()
-                            .replace("_tmb", "_640"));
-
-                    try {
-                        JsonObject releaseDates = movieJson
-                                .get("release_dates").getAsJsonObject();
-                        String datestr = releaseDates.get("theater")
-                                .getAsString();
-                        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-                        movie.setReleaseDate(df.parse(datestr));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-                    try {
-                        movie.setScore(movieJson.get("ratings")
-                                .getAsJsonObject().get("critics_score")
-                                .getAsInt());
-                    } catch (Exception e) {
-                        // No need to handle this exception
-                    }
-
-                    result.add(movie);
-
-                }
-            }
-        }
-        return result;
+        return new ArrayList<Movie>();
     }
 
     /* JSON utility method */
@@ -229,6 +156,7 @@ public class DummyDataProvider implements DataProvider {
 
     static List<String> theaters = new ArrayList<String>() {
         private static final long serialVersionUID = 1L;
+
         {
             add("Threater 1");
             add("Threater 2");
@@ -241,6 +169,7 @@ public class DummyDataProvider implements DataProvider {
 
     static List<String> rooms = new ArrayList<String>() {
         private static final long serialVersionUID = 1L;
+
         {
             add("Room 1");
             add("Room 2");
@@ -301,12 +230,12 @@ public class DummyDataProvider implements DataProvider {
      *
      * @return
      */
-    private Multimap<Long, Transaction> generateTransactionsData() {
-        Multimap<Long, Transaction> result = MultimapBuilder.hashKeys()
+    private Multimap<Long, Client> generateTransactionsData() {
+        Multimap<Long, Client> result = MultimapBuilder.hashKeys()
                 .arrayListValues().build();
 
         for (Movie movie : movies) {
-            result.putAll(movie.getId(), new ArrayList<Transaction>());
+            result.putAll(movie.getId(), new ArrayList<Client>());
 
             Calendar cal = Calendar.getInstance();
             int daysSubtractor = rand.nextInt(150) + 30;
@@ -321,31 +250,30 @@ public class DummyDataProvider implements DataProvider {
                 int hourOfDay = cal.get(Calendar.HOUR_OF_DAY);
                 if (hourOfDay > 10 && hourOfDay < 22) {
 
-                    Transaction transaction = new Transaction();
-                    transaction.setMovieId(movie.getId());
-                    transaction.setTitle(movie.getTitle());
+                    Client client = new Client();
+                    client.setStatus(movie.getTitle());
 
                     // Country
                     Object[] array = countryToCities.keySet().toArray();
                     int i = (int) (Math.random() * (array.length - 1));
                     String country = array[i].toString();
-                    transaction.setCountry(country);
+                    client.setName(country);
 
-                    transaction.setTime(cal.getTime());
+                    client.setDate(cal.getTime());
 
                     // City
                     Collection<String> cities = countryToCities.get(country);
-                    transaction.setCity(cities.iterator().next());
+                    client.setCity(cities.iterator().next());
 
                     // Theater
                     String theater = theaters
                             .get((int) (rand.nextDouble() * (theaters.size() - 1)));
-                    transaction.setTheater(theater);
+                    client.setPhone(theater);
 
                     // Room
                     String room = rooms.get((int) (rand.nextDouble() * (rooms
                             .size() - 1)));
-                    transaction.setRoom(room);
+                    client.setEmail(room);
 
                     // Title
                     int randomIndex = (int) (Math.abs(rand.nextGaussian()) * (movies
@@ -355,15 +283,7 @@ public class DummyDataProvider implements DataProvider {
                                 .size() / 2.0 - 1));
                     }
 
-                    // Seats
-                    int seats = (int) (1 + rand.nextDouble() * 3);
-                    transaction.setSeats(seats);
-
-                    // Price (approx. USD)
-                    double price = seats * (2 + (rand.nextDouble() * 8));
-                    transaction.setPrice(price);
-
-                    result.get(movie.getId()).add(transaction);
+                    result.get(movie.getId()).add(client);
                 }
 
                 cal.add(Calendar.SECOND, rand.nextInt(500000) + 5000);
@@ -386,31 +306,20 @@ public class DummyDataProvider implements DataProvider {
     @Override
     public User authenticate(String userName, String password) {
         User user = new User();
-        user.setFirstName(DummyDataGenerator.randomFirstName());
-        user.setLastName(DummyDataGenerator.randomLastName());
+        user.setFirstName("Анатоль");
+        user.setLastName("Саныч");
         user.setRole("admin");
-        String email = user.getFirstName().toLowerCase() + "."
-                + user.getLastName().toLowerCase() + "@"
-                + DummyDataGenerator.randomCompanyName().toLowerCase() + ".com";
-        user.setEmail(email.replaceAll(" ", ""));
-        user.setLocation(DummyDataGenerator.randomWord(5, true));
-        user.setBio("Quis aute iure reprehenderit in voluptate velit esse."
-                + "Cras mattis iudicium purus sit amet fermentum.");
-        return null;
+        user.setMale(true);
+        user.setEmail("anatol@mail.ru");
+        user.setPhone("+7 999 221 22 11");
+        user.setLocation("Красный Дар");
+        user.setBio("Тут ничего не написано");
+        return user;
     }
 
     @Override
-    public Collection<Transaction> getRecentTransactions(int count) {
-        List<Transaction> orderedTransactions = Lists.newArrayList(transactions
-                .values());
-        Collections.sort(orderedTransactions, new Comparator<Transaction>() {
-            @Override
-            public int compare(Transaction o1, Transaction o2) {
-                return o2.getTime().compareTo(o1.getTime());
-            }
-        });
-        return orderedTransactions.subList(0,
-                Math.min(count, transactions.values().size() - 1));
+    public Collection<Client> getRecentTransactions(int count) {
+        return clients;
     }
 
     private Multimap<Long, MovieRevenue> countRevenues() {
@@ -424,14 +333,14 @@ public class DummyDataProvider implements DataProvider {
 
     private Collection<MovieRevenue> countMovieRevenue(Movie movie) {
         Map<Date, Double> dailyIncome = new HashMap<Date, Double>();
-        for (Transaction transaction : transactions.get(movie.getId())) {
-            Date day = getDay(transaction.getTime());
+        for (Client client : transactions.get(movie.getId())) {
+            Date day = getDay(client.getDate());
 
             Double currentValue = dailyIncome.get(day);
             if (currentValue == null) {
                 currentValue = 0.0;
             }
-            dailyIncome.put(day, currentValue + transaction.getPrice());
+            dailyIncome.put(day, currentValue + 0);
         }
 
         Collection<MovieRevenue> result = new ArrayList<MovieRevenue>();
@@ -501,8 +410,8 @@ public class DummyDataProvider implements DataProvider {
     @Override
     public double getTotalSum() {
         double result = 0;
-        for (Transaction transaction : transactions.values()) {
-            result += transaction.getPrice();
+        for (Client client : transactions.values()) {
+            result += 1;
         }
         return result;
     }
@@ -518,14 +427,14 @@ public class DummyDataProvider implements DataProvider {
     }
 
     @Override
-    public Collection<Transaction> getTransactionsBetween(final Date startDate,
-            final Date endDate) {
+    public Collection<Client> getTransactionsBetween(final Date startDate,
+                                                   final Date endDate) {
         return Collections2.filter(transactions.values(),
-                new Predicate<Transaction>() {
+                new Predicate<Client>() {
                     @Override
-                    public boolean apply(Transaction input) {
-                        return !input.getTime().before(startDate)
-                                && !input.getTime().after(endDate);
+                    public boolean apply(Client input) {
+                        return !input.getDate().before(startDate)
+                                && !input.getDate().after(endDate);
                     }
                 });
     }

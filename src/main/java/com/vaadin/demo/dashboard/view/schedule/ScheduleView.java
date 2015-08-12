@@ -9,7 +9,7 @@ import com.google.common.eventbus.Subscribe;
 import com.vaadin.demo.dashboard.DashboardUI;
 import com.vaadin.demo.dashboard.component.MovieDetailsWindow;
 import com.vaadin.demo.dashboard.domain.Movie;
-import com.vaadin.demo.dashboard.domain.Transaction;
+import com.vaadin.demo.dashboard.domain.Client;
 import com.vaadin.demo.dashboard.event.DashboardEvent.BrowserResizeEvent;
 import com.vaadin.demo.dashboard.event.DashboardEventBus;
 import com.vaadin.event.LayoutEvents.LayoutClickEvent;
@@ -267,16 +267,16 @@ public final class ScheduleView extends CssLayout implements View {
                 final Date endDate) {
             // Transactions are dynamically fetched from the backend service
             // when needed.
-            Collection<Transaction> transactions = DashboardUI
+            Collection<Client> clients = DashboardUI
                     .getDataProvider().getTransactionsBetween(startDate,
                             endDate);
             List<CalendarEvent> result = new ArrayList<CalendarEvent>();
-            for (Transaction transaction : transactions) {
+            for (Client client : clients) {
                 Movie movie = DashboardUI.getDataProvider().getMovie(
-                        transaction.getMovieId());
-                Date end = new Date(transaction.getTime().getTime()
+                        1);
+                Date end = new Date(client.getDate().getTime()
                         + movie.getDuration() * 60 * 1000);
-                result.add(new MovieEvent(transaction.getTime(), end, movie));
+                result.add(new MovieEvent(client.getDate(), end, movie));
             }
             return result;
         }

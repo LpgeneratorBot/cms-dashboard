@@ -6,7 +6,7 @@ import java.util.Date;
 import com.vaadin.demo.dashboard.domain.DashboardNotification;
 import com.vaadin.demo.dashboard.domain.Movie;
 import com.vaadin.demo.dashboard.domain.MovieRevenue;
-import com.vaadin.demo.dashboard.domain.Transaction;
+import com.vaadin.demo.dashboard.domain.Client;
 import com.vaadin.demo.dashboard.domain.User;
 
 /**
@@ -18,7 +18,7 @@ public interface DataProvider {
      *            Number of transactions to fetch.
      * @return A Collection of most recent transactions.
      */
-    Collection<Transaction> getRecentTransactions(int count);
+    Collection<Client> getRecentTransactions(int count);
 
     /**
      * @param id
@@ -72,5 +72,5 @@ public interface DataProvider {
      * @return A Collection of Transactions between the given start and end
      *         dates.
      */
-    Collection<Transaction> getTransactionsBetween(Date startDate, Date endDate);
+    Collection<Client> getTransactionsBetween(Date startDate, Date endDate);
 }

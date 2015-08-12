@@ -3,9 +3,8 @@ package com.vaadin.demo.dashboard.view.reports;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.demo.dashboard.component.InlineTextEditor;
-import com.vaadin.demo.dashboard.component.TopTenMoviesTable;
 import com.vaadin.demo.dashboard.component.TransactionsListing;
-import com.vaadin.demo.dashboard.domain.Transaction;
+import com.vaadin.demo.dashboard.domain.Client;
 import com.vaadin.event.LayoutEvents.LayoutClickEvent;
 import com.vaadin.event.LayoutEvents.LayoutClickListener;
 import com.vaadin.event.Transferable;
@@ -182,11 +181,9 @@ public final class ReportEditor extends VerticalLayout {
                 result = new InlineTextEditor(
                         prefillData != null ? String.valueOf(prefillData)
                                 : null);
-            } else if (type == PaletteItemType.TABLE) {
-                result = new TopTenMoviesTable();
             } else if (type == PaletteItemType.TRANSACTIONS) {
                 result = new TransactionsListing(
-                        (Collection<Transaction>) prefillData);
+                        (Collection<Client>) prefillData);
             }
 
             return result;

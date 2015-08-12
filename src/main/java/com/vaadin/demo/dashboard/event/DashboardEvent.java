@@ -2,7 +2,7 @@ package com.vaadin.demo.dashboard.event;
 
 import java.util.Collection;
 
-import com.vaadin.demo.dashboard.domain.Transaction;
+import com.vaadin.demo.dashboard.domain.Client;
 import com.vaadin.demo.dashboard.view.DashboardViewType;
 
 /*
@@ -53,14 +53,14 @@ public abstract class DashboardEvent {
     }
 
     public static final class TransactionReportEvent {
-        private final Collection<Transaction> transactions;
+        private final Collection<Client> clients;
 
-        public TransactionReportEvent(final Collection<Transaction> transactions) {
-            this.transactions = transactions;
+        public TransactionReportEvent(final Collection<Client> clients) {
+            this.clients = clients;
         }
 
-        public Collection<Transaction> getTransactions() {
-            return transactions;
+        public Collection<Client> getClients() {
+            return clients;
         }
     }
 
@@ -80,6 +80,9 @@ public abstract class DashboardEvent {
     }
 
     public static class ProfileUpdatedEvent {
+    }
+
+    public static class ClientUpdatedEvent {
     }
 
 }

@@ -11,7 +11,7 @@
 		value="true" />
 
 	<!-- Uncomment the following to compile the widgetset for one browser only. 
-		This can reduce the GWT compilation time significantly when debugging. The 
+		This can reduce the GWT compilation date significantly when debugging. The
 		line should be commented out before deployment to production environments. 
 		Multiple browsers can be specified for GWT 1.7 as a comma separated list. 
 		The supported user agents at the moment of writing were: ie6,ie8,gecko,gecko1_8,safari,opera 

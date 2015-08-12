@@ -2,7 +2,6 @@ package com.vaadin.demo.dashboard.view.dashboard;
 
 import com.google.common.eventbus.Subscribe;
 import com.vaadin.demo.dashboard.DashboardUI;
-import com.vaadin.demo.dashboard.component.TopTenMoviesTable;
 import com.vaadin.demo.dashboard.domain.DashboardNotification;
 import com.vaadin.demo.dashboard.event.DashboardEvent.CloseOpenWindowsEvent;
 import com.vaadin.demo.dashboard.event.DashboardEvent.NotificationsCountUpdatedEvent;
@@ -145,7 +144,6 @@ public final class DashboardView extends Panel implements View,
         Responsive.makeResponsive(dashboardPanels);
 
         dashboardPanels.addComponent(buildNotes());
-        dashboardPanels.addComponent(buildTop10TitlesByRevenue());
 
         return dashboardPanels;
     }
@@ -158,12 +156,6 @@ public final class DashboardView extends Panel implements View,
         Component panel = createContentWrapper(notes);
         panel.addStyleName("notes");
         return panel;
-    }
-
-    private Component buildTop10TitlesByRevenue() {
-        Component contentWrapper = createContentWrapper(new TopTenMoviesTable());
-        contentWrapper.addStyleName("top10-revenue");
-        return contentWrapper;
     }
 
     private Component createContentWrapper(final Component content) {

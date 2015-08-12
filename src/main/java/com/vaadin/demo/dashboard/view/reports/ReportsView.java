@@ -171,7 +171,7 @@ public final class ReportsView extends TabSheet implements View, CloseHandler,
 
     @Subscribe
     public void createTransactionReport(final TransactionReportEvent event) {
-        addReport(ReportType.TRANSACTIONS, event.getTransactions());
+        addReport(ReportType.TRANSACTIONS, event.getClients());
     }
 
     @Override

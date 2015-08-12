@@ -228,7 +228,7 @@
       font-weight: $v-font-weight + 200;
     }
 
-    .notification-time {
+    .notification-date {
       font-size: round($v-font-size * 0.8);
       color: valo-font-color($v-window-background-color, .5);
     }

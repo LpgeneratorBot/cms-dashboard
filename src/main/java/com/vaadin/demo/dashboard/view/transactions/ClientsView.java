@@ -1,7 +1,6 @@
 package com.vaadin.demo.dashboard.view.transactions;
 
 import java.text.DateFormat;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Collections;
@@ -9,6 +8,8 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Set;
 
+import com.vaadin.demo.dashboard.event.DashboardEvent;
+import com.vaadin.event.ItemClickEvent;
 import org.vaadin.maddon.FilterableListContainer;
 
 import com.google.common.eventbus.Subscribe;
@@ -19,8 +20,7 @@ import com.vaadin.data.Property;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.demo.dashboard.DashboardUI;
-import com.vaadin.demo.dashboard.component.MovieDetailsWindow;
-import com.vaadin.demo.dashboard.domain.Transaction;
+import com.vaadin.demo.dashboard.domain.Client;
 import com.vaadin.demo.dashboard.event.DashboardEvent.BrowserResizeEvent;
 import com.vaadin.demo.dashboard.event.DashboardEvent.TransactionReportEvent;
 import com.vaadin.demo.dashboard.event.DashboardEventBus;
@@ -44,25 +44,26 @@ import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.Table;
-import com.vaadin.ui.Table.Align;
 import com.vaadin.ui.Table.TableDragMode;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.themes.ValoTheme;
 
-@SuppressWarnings({ "serial", "unchecked" })
-public final class TransactionsView extends VerticalLayout implements View {
+@SuppressWarnings({"serial", "unchecked"})
+public final class ClientsView extends VerticalLayout implements View {
 
     private final Table table;
     private Button createReport;
-    private static final DateFormat DATEFORMAT = new SimpleDateFormat(
-            "MM/dd/yyyy hh:mm:ss a");
-    private static final DecimalFormat DECIMALFORMAT = new DecimalFormat("#.##");
-    private static final String[] DEFAULT_COLLAPSIBLE = { "country", "city",
-            "theater", "room", "title", "seats" };
+    private static final DateFormat DATEFORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+    private static final String[] DEFAULT_COLLAPSIBLE = {"date", "name", "city", "phone", "email", "status"};
 
-    public TransactionsView() {
+    // ContactForm is an example of a custom component class
+    private ClientForm clientForm = new ClientForm();
+
+    private Client selectedClient;
+
+    public ClientsView() {
         setSizeFull();
         addStyleName("transactions");
         DashboardEventBus.register(this);
@@ -72,6 +73,8 @@ public final class TransactionsView extends VerticalLayout implements View {
         table = buildTable();
         addComponent(table);
         setExpandRatio(table, 1);
+        addComponent(clientForm);
+        clientForm.setVisible(false);
     }
 
     @Override
@@ -88,7 +91,7 @@ public final class TransactionsView extends VerticalLayout implements View {
         header.setSpacing(true);
         Responsive.makeResponsive(header);
 
-        Label title = new Label("Latest Transactions");
+        Label title = new Label("Последние клиенты");
         title.setSizeUndefined();
         title.addStyleName(ValoTheme.LABEL_H1);
         title.addStyleName(ValoTheme.LABEL_NO_MARGIN);
@@ -105,13 +108,13 @@ public final class TransactionsView extends VerticalLayout implements View {
     }
 
     private Button buildCreateReport() {
-        final Button createReport = new Button("Create Report");
-        createReport
-                .setDescription("Create a new report from the selected transactions");
+        final Button createReport = new Button("Редактировать");
+        createReport.setDescription("Редактирует выбранного клиента");
         createReport.addClickListener(new ClickListener() {
             @Override
             public void buttonClick(final ClickEvent event) {
-                createNewReportFromSelection();
+                clientForm.edit(selectedClient);
+                clientForm.setVisible(true);
             }
         });
         createReport.setEnabled(false);
@@ -128,27 +131,27 @@ public final class TransactionsView extends VerticalLayout implements View {
                 data.addContainerFilter(new Filter() {
                     @Override
                     public boolean passesFilter(final Object itemId,
-                            final Item item) {
+                                                final Item item) {
 
                         if (event.getText() == null
                                 || event.getText().equals("")) {
                             return true;
                         }
 
-                        return filterByProperty("country", item,
+                        return filterByProperty("name", item,
                                 event.getText())
                                 || filterByProperty("city", item,
-                                        event.getText())
-                                || filterByProperty("title", item,
-                                        event.getText());
+                                event.getText())
+                                || filterByProperty("status", item,
+                                event.getText());
 
                     }
 
                     @Override
                     public boolean appliesToProperty(final Object propertyId) {
-                        if (propertyId.equals("country")
+                        if (propertyId.equals("name")
                                 || propertyId.equals("city")
-                                || propertyId.equals("title")) {
+                                || propertyId.equals("status")) {
                             return true;
                         }
                         return false;
@@ -176,17 +179,11 @@ public final class TransactionsView extends VerticalLayout implements View {
         final Table table = new Table() {
             @Override
             protected String formatPropertyValue(final Object rowId,
-                    final Object colId, final Property<?> property) {
+                                                 final Object colId, final Property<?> property) {
                 String result = super.formatPropertyValue(rowId, colId,
                         property);
-                if (colId.equals("time")) {
+                if (colId.equals("date")) {
                     result = DATEFORMAT.format(((Date) property.getValue()));
-                } else if (colId.equals("price")) {
-                    if (property != null && property.getValue() != null) {
-                        return "$" + DECIMALFORMAT.format(property.getValue());
-                    } else {
-                        return "";
-                    }
                 }
                 return result;
             }
@@ -198,31 +195,16 @@ public final class TransactionsView extends VerticalLayout implements View {
         table.setSelectable(true);
 
         table.setColumnCollapsingAllowed(true);
-        table.setColumnCollapsible("time", false);
-        table.setColumnCollapsible("price", false);
-
         table.setColumnReorderingAllowed(true);
         table.setContainerDataSource(new TempTransactionsContainer(DashboardUI
-                .getDataProvider().getRecentTransactions(200)));
-        table.setSortContainerPropertyId("time");
+                .getDataProvider().getRecentTransactions(20)));
+        table.setSortContainerPropertyId("date");
         table.setSortAscending(false);
 
-        table.setColumnAlignment("seats", Align.RIGHT);
-        table.setColumnAlignment("price", Align.RIGHT);
-
-        table.setVisibleColumns("time", "country", "city", "theater", "room",
-                "title", "seats", "price");
-        table.setColumnHeaders("Time", "Country", "City", "Theater", "Room",
-                "Title", "Seats", "Price");
-
-        table.setFooterVisible(true);
-        table.setColumnFooter("time", "Total");
-
-        table.setColumnFooter(
-                "price",
-                "$"
-                        + DECIMALFORMAT.format(DashboardUI.getDataProvider()
-                                .getTotalSum()));
+        table.setVisibleColumns("date", "name", "city", "phone", "email",
+                "status");
+        table.setColumnHeaders("Дата", "ФИО", "Город", "Телефон", "Почта",
+                "Статус");
 
         // Allow dragging items to the reports menu
         table.setDragMode(TableDragMode.MULTIROW);
@@ -240,7 +222,12 @@ public final class TransactionsView extends VerticalLayout implements View {
             }
         });
         table.setImmediate(true);
-
+        table.addItemClickListener(new ItemClickEvent.ItemClickListener() {
+            @Override
+            public void itemClick(ItemClickEvent event) {
+                selectedClient = (Client) event.getItemId();
+            }
+        });
         return table;
     }
 
@@ -256,6 +243,11 @@ public final class TransactionsView extends VerticalLayout implements View {
     }
 
     @Subscribe
+    public void userUpdated(final DashboardEvent.ClientUpdatedEvent event) {
+        table.refreshRowCache();
+    }
+
+    @Subscribe
     public void browserResized(final BrowserResizeEvent event) {
         // Some columns are collapsed when browser window width gets small
         // enough to make the table fit better.
@@ -268,7 +260,7 @@ public final class TransactionsView extends VerticalLayout implements View {
     }
 
     private boolean filterByProperty(final String prop, final Item item,
-            final String text) {
+                                     final String text) {
         if (item == null || item.getItemProperty(prop) == null
                 || item.getItemProperty(prop).getValue() == null) {
             return false;
@@ -285,7 +277,7 @@ public final class TransactionsView extends VerticalLayout implements View {
         UI.getCurrent().getNavigator()
                 .navigateTo(DashboardViewType.REPORTS.getViewName());
         DashboardEventBus.post(new TransactionReportEvent(
-                (Collection<Transaction>) table.getValue()));
+                (Collection<Client>) table.getValue()));
     }
 
     @Override
@@ -293,41 +285,30 @@ public final class TransactionsView extends VerticalLayout implements View {
     }
 
     private class TransactionsActionHandler implements Handler {
-        private final Action report = new Action("Create Report");
-
-        private final Action discard = new Action("Discard");
-
-        private final Action details = new Action("Movie details");
+        private final Action report = new Action("Договор");
+        private final Action discard = new Action("Удалить");
 
         @Override
         public void handleAction(final Action action, final Object sender,
-                final Object target) {
+                                 final Object target) {
             if (action == report) {
                 createNewReportFromSelection();
             } else if (action == discard) {
                 Notification.show("Not implemented in this demo");
-            } else if (action == details) {
-                Item item = ((Table) sender).getItem(target);
-                if (item != null) {
-                    Long movieId = (Long) item.getItemProperty("movieId")
-                            .getValue();
-                    MovieDetailsWindow.open(DashboardUI.getDataProvider()
-                            .getMovie(movieId), null, null);
-                }
             }
         }
 
         @Override
         public Action[] getActions(final Object target, final Object sender) {
-            return new Action[] { details, report, discard };
+            return new Action[]{report, discard};
         }
     }
 
     private class TempTransactionsContainer extends
-            FilterableListContainer<Transaction> {
+            FilterableListContainer<Client> {
 
         public TempTransactionsContainer(
-                final Collection<Transaction> collection) {
+                final Collection<Client> collection) {
             super(collection);
         }
 
@@ -337,28 +318,22 @@ public final class TransactionsView extends VerticalLayout implements View {
         public void sort(final Object[] propertyId, final boolean[] ascending) {
             final boolean sortAscending = ascending[0];
             final Object sortContainerPropertyId = propertyId[0];
-            Collections.sort(getBackingList(), new Comparator<Transaction>() {
+            Collections.sort(getBackingList(), new Comparator<Client>() {
                 @Override
-                public int compare(final Transaction o1, final Transaction o2) {
+                public int compare(final Client o1, final Client o2) {
                     int result = 0;
-                    if ("time".equals(sortContainerPropertyId)) {
-                        result = o1.getTime().compareTo(o2.getTime());
-                    } else if ("country".equals(sortContainerPropertyId)) {
-                        result = o1.getCountry().compareTo(o2.getCountry());
+                    if ("date".equals(sortContainerPropertyId)) {
+                        result = o1.getDate().compareTo(o2.getDate());
+                    } else if ("name".equals(sortContainerPropertyId)) {
+                        result = o1.getName().compareTo(o2.getName());
                     } else if ("city".equals(sortContainerPropertyId)) {
                         result = o1.getCity().compareTo(o2.getCity());
-                    } else if ("theater".equals(sortContainerPropertyId)) {
-                        result = o1.getTheater().compareTo(o2.getTheater());
-                    } else if ("room".equals(sortContainerPropertyId)) {
-                        result = o1.getRoom().compareTo(o2.getRoom());
-                    } else if ("title".equals(sortContainerPropertyId)) {
-                        result = o1.getTitle().compareTo(o2.getTitle());
-                    } else if ("seats".equals(sortContainerPropertyId)) {
-                        result = new Integer(o1.getSeats()).compareTo(o2
-                                .getSeats());
-                    } else if ("price".equals(sortContainerPropertyId)) {
-                        result = new Double(o1.getPrice()).compareTo(o2
-                                .getPrice());
+                    } else if ("phone".equals(sortContainerPropertyId)) {
+                        result = o1.getPhone().compareTo(o2.getPhone());
+                    } else if ("email".equals(sortContainerPropertyId)) {
+                        result = o1.getEmail().compareTo(o2.getEmail());
+                    } else if ("status".equals(sortContainerPropertyId)) {
+                        result = o1.getStatus().compareTo(o2.getStatus());
                     }
 
                     if (!sortAscending) {
@@ -368,7 +343,5 @@ public final class TransactionsView extends VerticalLayout implements View {
                 }
             });
         }
-
     }
-
 }
