@@ -269,8 +269,8 @@ public final class ClientsView extends VerticalLayout implements View {
     }
 
     void createNewReportFromSelection() {
-        UI.getCurrent().getNavigator()
-                .navigateTo(DashboardViewType.REPORTS.getViewName());
+//        UI.getCurrent().getNavigator()
+//                .navigateTo(DashboardViewType.REPORTS.getViewName());
         DashboardEventBus.post(new TransactionReportEvent(
                 (Collection<Client>) table.getValue()));
     }
