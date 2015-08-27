@@ -14,12 +14,12 @@ import java.util.Date;
  */
 public interface DataProvider {
 
-     /**
-     * @param count
-     *            Number of transactions to fetch.
+    Collection<Client> getAllRecentClients();
+
+    /**.
      * @return A Collection of most recent transactions.
      */
-    Collection<Client> getRecentClients(int count);
+    Collection<Client> getRecentClientsByUser(User user);
 
     /**
      * @param userName
@@ -33,6 +33,8 @@ public interface DataProvider {
     Collection<ClientStatus> getAllStatuses();
 
     Collection<ClientStatusHistory> getStatusesForClient(Client client);
+
+    boolean updateClient(Client client);
 
     boolean updateClientStatus(ClientStatusHistory status);
 

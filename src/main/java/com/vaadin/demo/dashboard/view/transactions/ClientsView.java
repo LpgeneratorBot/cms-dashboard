@@ -7,8 +7,10 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Set;
 
+import com.vaadin.demo.dashboard.domain.User;
 import com.vaadin.demo.dashboard.event.DashboardEvent;
 import com.vaadin.event.ItemClickEvent;
+import com.vaadin.server.VaadinSession;
 import org.vaadin.maddon.FilterableListContainer;
 
 import com.google.common.eventbus.Subscribe;
@@ -191,8 +193,17 @@ public final class ClientsView extends VerticalLayout implements View {
 
         table.setColumnCollapsingAllowed(true);
         table.setColumnReorderingAllowed(true);
-        table.setContainerDataSource(new TempTransactionsContainer(DashboardUI
-                .getDataProvider().getRecentClients(20)));
+        User user = (User) VaadinSession.getCurrent().getAttribute(
+                User.class.getName());
+        Collection<Client> recentClients;
+        if ("admin".equals(user.getRole())) {
+            recentClients= DashboardUI
+                    .getDataProvider().getAllRecentClients();
+        } else {
+            recentClients = DashboardUI
+                    .getDataProvider().getRecentClientsByUser(user);
+        }
+        table.setContainerDataSource(new TempTransactionsContainer(recentClients));
         table.setSortContainerPropertyId("date");
         table.setSortAscending(false);
 

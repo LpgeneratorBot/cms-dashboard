@@ -36,10 +36,20 @@ public class IBatisDataProvider implements DataProvider {
     }
 
     @Override
-    public Collection<Client> getRecentClients(int count) {
+    public Collection<Client> getAllRecentClients() {
         SqlSession session = sqlSessionFactory.openSession();
         try {
-            return session.selectList("ClientProvider.getRecentClients", count);
+            return session.selectList("ClientProvider.getAllRecentClients");
+        } finally {
+            session.close();
+        }
+    }
+
+    @Override
+    public Collection<Client> getRecentClientsByUser(User user) {
+        SqlSession session = sqlSessionFactory.openSession();
+        try {
+            return session.selectList("ClientProvider.getRecentClientsByUser", user);
         } finally {
             session.close();
         }
@@ -80,6 +90,18 @@ public class IBatisDataProvider implements DataProvider {
         try {
             return session.selectList("ClientProvider.getAllStatuses");
         } finally {
+            session.close();
+        }
+    }
+
+    @Override
+    public boolean updateClient(Client client) {
+        SqlSession session = sqlSessionFactory.openSession();
+        try {
+            int updateCount = session.update("ClientProvider.updateClient", client);
+            return updateCount > 0;
+        } finally {
+            session.commit();
             session.close();
         }
     }

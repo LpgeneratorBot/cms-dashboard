@@ -49,6 +49,7 @@ public class ClientWindow extends Window {
     ComboBox status = new ComboBox("Статус");
     TextField phone = new TextField("Телефон");
     TextField email = new TextField("Почта");
+    TextField city = new TextField("Город");
     DateField date = new DateField("Дата");
     TextArea description = new TextArea("Описание");
 
@@ -65,6 +66,7 @@ public class ClientWindow extends Window {
         name.setValue(client.getName());
         phone.setValue(client.getPhone());
         email.setValue(client.getEmail());
+        city.setValue(client.getCity());
         date.setValue(client.getDate());
     }
 
@@ -104,7 +106,7 @@ public class ClientWindow extends Window {
         Label section = new Label("Информация");
         section.addStyleName(ValoTheme.LABEL_H4);
         section.addStyleName(ValoTheme.LABEL_COLORED);
-        content.addComponents(section, name, phone, email, date);
+        content.addComponents(section, name, phone, email, city, date);
 
         save.setStyleName(ValoTheme.BUTTON_PRIMARY);
         save.setClickShortcut(ShortcutAction.KeyCode.ENTER);
@@ -122,10 +124,11 @@ public class ClientWindow extends Window {
                 client.setPhone(phone.getValue());
                 client.setName(name.getValue());
                 client.setEmail(email.getValue());
+                client.setCity(city.getValue());
                 ClientStatus value = (ClientStatus) status.getValue();
                 client.setStatus(value.getName());
 
-                if (!newStatus.equals(initialStatus)) {
+                if (newStatus != null &&  !newStatus.equals(initialStatus)) {
                     ClientStatusHistory newClientStatus = new ClientStatusHistory();
                     newClientStatus.setClientid(client.getId());
                     newClientStatus.setDescription(description.getValue());
@@ -133,6 +136,8 @@ public class ClientWindow extends Window {
                     newClientStatus.setName(value.getName());
                     dataProvider.updateClientStatus(newClientStatus);
                 }
+
+                dataProvider.updateClient(client);
                 ClientWindow.this.close();
                 DashboardEventBus.post(new DashboardEvent.ClientUpdatedEvent());
             }

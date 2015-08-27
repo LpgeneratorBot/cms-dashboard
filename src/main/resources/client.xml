@@ -7,15 +7,61 @@
     <resultMap id="statusResult" type="com.vaadin.demo.dashboard.domain.ClientStatus" autoMapping="true"/>
     <resultMap id="statusHistoryResult" type="com.vaadin.demo.dashboard.domain.ClientStatusHistory" autoMapping="true"/>
 
-    <select id="getRecentClients" parameterType="int" resultMap="clientResult">
-        SELECT * FROM Clients ORDER BY id DESC LIMIT #{count}
+    <select id="getRecentClientsByUser" parameterType="com.vaadin.demo.dashboard.domain.User" resultMap="clientResult">
+        <!--tip  "http://stackoverflow.com/questions/2111384/sql-join-selecting-the-last-records-in-a-one-to-many-relationship"-->
+        <![CDATA[
+                SELECT c.id, c.name, c.city, c.phone, c.email, c.date, sd.name as status
+        FROM Clients c
+        LEFT OUTER JOIN StatusHistory p1 ON (c.id = p1.clientid)
+        LEFT OUTER JOIN StatusHistory p2 ON (c.id = p2.clientid AND
+        (p1.timestamp < p2.timestamp OR p1.timestamp = p2.timestamp AND p1.id < p2.id))
+        LEFT OUTER JOIN StatusDictionary sd ON sd.id=p1.statusid
+        LEFT OUTER JOIN UsersToGroups utg ON c.groupid = utg.groupid
+        LEFT OUTER JOIN Users u ON utg.userid = u.id
+        WHERE p2.id IS NULL
+        AND u.id = #{id}
+        ORDER BY id DESC LIMIT 100;
+        ]]>
     </select>
 
-    <select id="getAllStatuses"  resultMap="statusResult">
+    <select id="getAllRecentClients" parameterType="com.vaadin.demo.dashboard.domain.User" resultMap="clientResult">
+        <!--tip  "http://stackoverflow.com/questions/2111384/sql-join-selecting-the-last-records-in-a-one-to-many-relationship"-->
+        <![CDATA[
+                SELECT c.id, c.name, c.city, c.phone, c.email, c.date, sd.name as status
+        FROM Clients c
+        LEFT OUTER JOIN StatusHistory p1 ON (c.id = p1.clientid)
+        LEFT OUTER JOIN StatusHistory p2 ON (c.id = p2.clientid AND
+        (p1.timestamp < p2.timestamp OR p1.timestamp = p2.timestamp AND p1.id < p2.id))
+        LEFT OUTER JOIN StatusDictionary sd ON sd.id=p1.statusid
+        LEFT OUTER JOIN UsersToGroups utg ON c.groupid = utg.groupid
+        LEFT OUTER JOIN Users u ON utg.userid = u.id
+        WHERE p2.id IS NULL
+        ORDER BY id DESC LIMIT 100;
+        ]]>
+    </select>
+
+    <update
+            id="updateClient"
+            parameterType="com.vaadin.demo.dashboard.domain.Client"
+            flushCache="true"
+            statementType="PREPARED"
+            timeout="20"
+            >
+        update Clients set
+        name = #{name},
+        phone = #{phone},
+        date = #{date},
+        city = #{city},
+        email = #{email}
+        where id = #{id}
+    </update>
+
+    <select id="getAllStatuses" resultMap="statusResult">
         SELECT * FROM StatusDictionary ORDER BY id ASC
     </select>
 
-    <select id="getStatusesForClient"  resultMap="statusHistoryResult" parameterType="com.vaadin.demo.dashboard.domain.User">
+    <select id="getStatusesForClient" resultMap="statusHistoryResult"
+            parameterType="com.vaadin.demo.dashboard.domain.Client">
         SELECT sh.id, sh.timestamp, sd.name, sd.id as statusid, sh.description, sh.clientid FROM StatusHistory as sh LEFT OUTER JOIN StatusDictionary as sd ON sh.statusid=sd.id WHERE sh.clientid=#{id} ORDER BY sh.timestamp DESC
     </select>
 
