@@ -6,6 +6,7 @@ import com.vaadin.demo.dashboard.domain.ClientStatus;
 import com.vaadin.demo.dashboard.domain.ClientStatusHistory;
 import com.vaadin.demo.dashboard.domain.DashboardNotification;
 import com.vaadin.demo.dashboard.domain.User;
+import com.vaadin.demo.dashboard.domain.UserGroup;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -102,6 +103,16 @@ public class IBatisDataProvider implements DataProvider {
             return updateCount > 0;
         } finally {
             session.commit();
+            session.close();
+        }
+    }
+
+    @Override
+    public Collection<UserGroup> getGroups() {
+        SqlSession session = sqlSessionFactory.openSession();
+        try {
+            return session.selectList("ClientProvider.getGroups");
+        } finally {
             session.close();
         }
     }

@@ -6,6 +6,7 @@
     <resultMap id="clientResult" type="com.vaadin.demo.dashboard.domain.Client" autoMapping="true"/>
     <resultMap id="statusResult" type="com.vaadin.demo.dashboard.domain.ClientStatus" autoMapping="true"/>
     <resultMap id="statusHistoryResult" type="com.vaadin.demo.dashboard.domain.ClientStatusHistory" autoMapping="true"/>
+    <resultMap id="userGroupResult" type="com.vaadin.demo.dashboard.domain.UserGroup" autoMapping="true"/>
 
     <select id="getRecentClientsByUser" parameterType="com.vaadin.demo.dashboard.domain.User" resultMap="clientResult">
         <!--tip  "http://stackoverflow.com/questions/2111384/sql-join-selecting-the-last-records-in-a-one-to-many-relationship"-->
@@ -27,7 +28,7 @@
     <select id="getAllRecentClients" parameterType="com.vaadin.demo.dashboard.domain.User" resultMap="clientResult">
         <!--tip  "http://stackoverflow.com/questions/2111384/sql-join-selecting-the-last-records-in-a-one-to-many-relationship"-->
         <![CDATA[
-                SELECT c.id, c.name, c.city, c.phone, c.email, c.date, sd.name as status
+          SELECT c.id, c.name, c.city, c.phone, c.email, c.date, g.description as 'group', sd.name as status
         FROM Clients c
         LEFT OUTER JOIN StatusHistory p1 ON (c.id = p1.clientid)
         LEFT OUTER JOIN StatusHistory p2 ON (c.id = p2.clientid AND
@@ -35,6 +36,7 @@
         LEFT OUTER JOIN StatusDictionary sd ON sd.id=p1.statusid
         LEFT OUTER JOIN UsersToGroups utg ON c.groupid = utg.groupid
         LEFT OUTER JOIN Users u ON utg.userid = u.id
+        LEFT OUTER JOIN Groups g ON c.groupid = g.id
         WHERE p2.id IS NULL
         ORDER BY id DESC LIMIT 100;
         ]]>
@@ -55,6 +57,10 @@
         email = #{email}
         where id = #{id}
     </update>
+
+    <select id="getGroups" resultMap="userGroupResult">
+        SELECT * FROM Groups ORDER BY id ASC
+    </select>
 
     <select id="getAllStatuses" resultMap="statusResult">
         SELECT * FROM StatusDictionary ORDER BY id ASC

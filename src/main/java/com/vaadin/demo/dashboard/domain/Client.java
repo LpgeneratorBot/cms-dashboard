@@ -11,6 +11,7 @@ public final class Client {
     private String phone;
     private String email;
     private String status;
+    private String group;
 
     public int getId() {
         return id;
@@ -66,6 +67,14 @@ public final class Client {
 
     public void setEmail(final String email) {
         this.email = email;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
     }
 
     @Override

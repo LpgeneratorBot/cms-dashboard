@@ -7,10 +7,18 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Set;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.vaadin.demo.dashboard.domain.User;
+import com.vaadin.demo.dashboard.domain.UserGroup;
 import com.vaadin.demo.dashboard.event.DashboardEvent;
 import com.vaadin.event.ItemClickEvent;
+import com.vaadin.server.UserError;
 import com.vaadin.server.VaadinSession;
+import com.vaadin.ui.ComboBox;
 import org.vaadin.maddon.FilterableListContainer;
 
 import com.google.common.eventbus.Subscribe;
@@ -23,9 +31,7 @@ import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.demo.dashboard.DashboardUI;
 import com.vaadin.demo.dashboard.domain.Client;
 import com.vaadin.demo.dashboard.event.DashboardEvent.BrowserResizeEvent;
-import com.vaadin.demo.dashboard.event.DashboardEvent.TransactionReportEvent;
 import com.vaadin.demo.dashboard.event.DashboardEventBus;
-import com.vaadin.demo.dashboard.view.DashboardViewType;
 import com.vaadin.event.Action;
 import com.vaadin.event.Action.Handler;
 import com.vaadin.event.FieldEvents.TextChangeEvent;
@@ -57,6 +63,10 @@ public final class ClientsView extends VerticalLayout implements View {
     private final Table table;
     private Button btEditClient;
     private static final String[] DEFAULT_COLLAPSIBLE = {"date", "name", "city", "phone", "email", "status"};
+    private static final Object[] USER_COLUMNS = {"date", "name", "city", "phone", "email", "status"};
+    private static final String[] USER_NAMES = {"Дата", "ФИО", "Город", "Телефон", "Почта", "Статус"};
+    private static final Object[] ADMIN_COLUMNS = {"date", "name", "city", "phone", "email", "status", "group"};
+    private static final String[] ADMIN_NAMES = {"Дата", "ФИО", "Город", "Телефон", "Почта", "Статус", "Группа"};
 
     private Client selectedClient;
 
@@ -192,25 +202,58 @@ public final class ClientsView extends VerticalLayout implements View {
         table.setSelectable(true);
 
         table.setColumnCollapsingAllowed(true);
-        table.setColumnReorderingAllowed(true);
+        table.setColumnReorderingAllowed(false);
+
+        final Collection<UserGroup> groups = DashboardUI
+                .getDataProvider().getGroups();
+        final ImmutableMap<String, UserGroup> groupIndex = Maps.uniqueIndex(groups, new Function<UserGroup, String>() {
+            @Override
+            public String apply(UserGroup input) {
+                return input.getDescription();
+            }
+        });
+
+        table.addGeneratedColumn("group", new Table.ColumnGenerator() {
+            @Override
+            public Object generateCell(Table source, Object itemId,
+                                       Object columnId) {
+                ComboBox combo = new ComboBox();
+                combo.setSizeFull();
+                combo.addItems(groups);
+                combo.addStyleName("compact");
+                Client client = (Client) itemId;
+                String groupDesc = client.getGroup();
+
+                UserGroup userGroup = groupIndex.get(groupDesc);
+                if (userGroup!=null) {
+                    combo.select(userGroup);
+                } else {
+                    combo.setComponentError(new UserError("Группа не определена!"));
+                }
+                return combo;
+            }
+        });
+
         User user = (User) VaadinSession.getCurrent().getAttribute(
                 User.class.getName());
         Collection<Client> recentClients;
-        if ("admin".equals(user.getRole())) {
-            recentClients= DashboardUI
+        boolean isAdmin = "admin".equals(user.getRole());
+        if (isAdmin) {
+            recentClients = DashboardUI
                     .getDataProvider().getAllRecentClients();
+            table.setContainerDataSource(new TempTransactionsContainer(recentClients));
+            table.setVisibleColumns(ADMIN_COLUMNS);
+            table.setColumnHeaders(ADMIN_NAMES);
         } else {
             recentClients = DashboardUI
                     .getDataProvider().getRecentClientsByUser(user);
+            table.setContainerDataSource(new TempTransactionsContainer(recentClients));
+            table.setVisibleColumns(USER_COLUMNS);
+            table.setColumnHeaders(USER_NAMES);
         }
-        table.setContainerDataSource(new TempTransactionsContainer(recentClients));
         table.setSortContainerPropertyId("date");
         table.setSortAscending(false);
 
-        table.setVisibleColumns("date", "name", "city", "phone", "email",
-                "status");
-        table.setColumnHeaders("Дата", "ФИО", "Город", "Телефон", "Почта",
-                "Статус");
 
         // Allow dragging items to the reports menu
         table.setDragMode(TableDragMode.MULTIROW);
@@ -279,34 +322,24 @@ public final class ClientsView extends VerticalLayout implements View {
         return false;
     }
 
-    void createNewReportFromSelection() {
-//        UI.getCurrent().getNavigator()
-//                .navigateTo(DashboardViewType.REPORTS.getViewName());
-        DashboardEventBus.post(new TransactionReportEvent(
-                (Collection<Client>) table.getValue()));
-    }
-
     @Override
     public void enter(final ViewChangeEvent event) {
     }
 
     private class TransactionsActionHandler implements Handler {
-        private final Action report = new Action("Договор");
         private final Action discard = new Action("Удалить");
 
         @Override
         public void handleAction(final Action action, final Object sender,
                                  final Object target) {
-            if (action == report) {
-                createNewReportFromSelection();
-            } else if (action == discard) {
-                Notification.show("Not implemented in this demo");
+            if (action == discard) {
+                Notification.show("Данная операция не поддерживается");
             }
         }
 
         @Override
         public Action[] getActions(final Object target, final Object sender) {
-            return new Action[]{report, discard};
+            return new Action[]{discard};
         }
     }
 

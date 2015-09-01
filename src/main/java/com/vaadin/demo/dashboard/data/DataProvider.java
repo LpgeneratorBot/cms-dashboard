@@ -5,6 +5,7 @@ import com.vaadin.demo.dashboard.domain.ClientStatus;
 import com.vaadin.demo.dashboard.domain.ClientStatusHistory;
 import com.vaadin.demo.dashboard.domain.DashboardNotification;
 import com.vaadin.demo.dashboard.domain.User;
+import com.vaadin.demo.dashboard.domain.UserGroup;
 
 import java.util.Collection;
 import java.util.Date;
@@ -33,6 +34,8 @@ public interface DataProvider {
     Collection<ClientStatus> getAllStatuses();
 
     Collection<ClientStatusHistory> getStatusesForClient(Client client);
+
+    Collection<UserGroup> getGroups();
 
     boolean updateClient(Client client);
 
