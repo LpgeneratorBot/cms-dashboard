@@ -11,7 +11,7 @@ public final class Client {
     private String phone;
     private String email;
     private String status;
-    private String group;
+    private int group;
 
     public int getId() {
         return id;
@@ -69,11 +69,11 @@ public final class Client {
         this.email = email;
     }
 
-    public String getGroup() {
+    public int getGroup() {
         return group;
     }
 
-    public void setGroup(String group) {
+    public void setGroup(int group) {
         this.group = group;
     }
 
@@ -87,6 +87,7 @@ public final class Client {
                 ", phone='" + phone + '\'' +
                 ", email='" + email + '\'' +
                 ", status='" + status + '\'' +
+                ", group=" + group +
                 '}';
     }
 }

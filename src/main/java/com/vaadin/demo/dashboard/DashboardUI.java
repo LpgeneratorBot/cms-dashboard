@@ -6,6 +6,7 @@ import com.vaadin.annotations.Title;
 import com.vaadin.annotations.Widgetset;
 import com.vaadin.demo.dashboard.data.DataProvider;
 import com.vaadin.demo.dashboard.data.ibatis.IBatisDataProvider;
+import com.vaadin.demo.dashboard.data.stub.StubbedDataProvider;
 import com.vaadin.demo.dashboard.domain.User;
 import com.vaadin.demo.dashboard.event.DashboardEvent.BrowserResizeEvent;
 import com.vaadin.demo.dashboard.event.DashboardEvent.CloseOpenWindowsEvent;
@@ -41,6 +42,7 @@ public final class DashboardUI extends UI {
      * actually accessed.
      */
     private final DataProvider dataProvider = new IBatisDataProvider();
+//    private final DataProvider dataProvider = new StubbedDataProvider();
     private final DashboardEventBus dashboardEventbus = new DashboardEventBus();
 
     @Override

@@ -28,7 +28,7 @@
     <select id="getAllRecentClients" parameterType="com.vaadin.demo.dashboard.domain.User" resultMap="clientResult">
         <!--tip  "http://stackoverflow.com/questions/2111384/sql-join-selecting-the-last-records-in-a-one-to-many-relationship"-->
         <![CDATA[
-          SELECT c.id, c.name, c.city, c.phone, c.email, c.date, g.description as 'group', sd.name as status
+          SELECT c.id, c.name, c.city, c.phone, c.email, c.date, g.id as 'group', sd.name as status
         FROM Clients c
         LEFT OUTER JOIN StatusHistory p1 ON (c.id = p1.clientid)
         LEFT OUTER JOIN StatusHistory p2 ON (c.id = p2.clientid AND
@@ -49,13 +49,16 @@
             statementType="PREPARED"
             timeout="20"
             >
+        <![CDATA[
         update Clients set
         name = #{name},
         phone = #{phone},
         date = #{date},
         city = #{city},
-        email = #{email}
+        email = #{email},
+        groupid = #{group}
         where id = #{id}
+        ]]>
     </update>
 
     <select id="getGroups" resultMap="userGroupResult">

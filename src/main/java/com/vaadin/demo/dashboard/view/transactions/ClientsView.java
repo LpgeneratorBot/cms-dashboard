@@ -1,26 +1,8 @@
 package com.vaadin.demo.dashboard.view.transactions;
 
-import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Set;
-
 import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.vaadin.demo.dashboard.domain.User;
-import com.vaadin.demo.dashboard.domain.UserGroup;
-import com.vaadin.demo.dashboard.event.DashboardEvent;
-import com.vaadin.event.ItemClickEvent;
-import com.vaadin.server.UserError;
-import com.vaadin.server.VaadinSession;
-import com.vaadin.ui.ComboBox;
-import org.vaadin.maddon.FilterableListContainer;
-
 import com.google.common.eventbus.Subscribe;
 import com.vaadin.data.Container.Filter;
 import com.vaadin.data.Container.Filterable;
@@ -29,13 +11,18 @@ import com.vaadin.data.Property;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.demo.dashboard.DashboardUI;
+import com.vaadin.demo.dashboard.data.DataProvider;
 import com.vaadin.demo.dashboard.domain.Client;
+import com.vaadin.demo.dashboard.domain.User;
+import com.vaadin.demo.dashboard.domain.UserGroup;
+import com.vaadin.demo.dashboard.event.DashboardEvent;
 import com.vaadin.demo.dashboard.event.DashboardEvent.BrowserResizeEvent;
 import com.vaadin.demo.dashboard.event.DashboardEventBus;
 import com.vaadin.event.Action;
 import com.vaadin.event.Action.Handler;
 import com.vaadin.event.FieldEvents.TextChangeEvent;
 import com.vaadin.event.FieldEvents.TextChangeListener;
+import com.vaadin.event.ItemClickEvent;
 import com.vaadin.event.ShortcutAction.KeyCode;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.navigator.View;
@@ -43,9 +30,12 @@ import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
 import com.vaadin.server.FontAwesome;
 import com.vaadin.server.Page;
 import com.vaadin.server.Responsive;
+import com.vaadin.server.UserError;
+import com.vaadin.server.VaadinSession;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.Button.ClickListener;
+import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
@@ -56,6 +46,14 @@ import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.themes.ValoTheme;
+import org.vaadin.maddon.FilterableListContainer;
+
+import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.Set;
 
 @SuppressWarnings({"serial", "unchecked"})
 public final class ClientsView extends VerticalLayout implements View {
@@ -190,7 +188,12 @@ public final class ClientsView extends VerticalLayout implements View {
                 String result = super.formatPropertyValue(rowId, colId,
                         property);
                 if (colId.equals("date")) {
-                    result = new SimpleDateFormat("dd/MM/yyyy").format(((Date) property.getValue()));
+                    Object value = property.getValue();
+                    if (value != null) {
+                        result = new SimpleDateFormat("dd/MM/yyyy").format(((Date) value));
+                    } else {
+                        result = "";
+                    }
                 }
                 return result;
             }
@@ -204,12 +207,13 @@ public final class ClientsView extends VerticalLayout implements View {
         table.setColumnCollapsingAllowed(true);
         table.setColumnReorderingAllowed(false);
 
-        final Collection<UserGroup> groups = DashboardUI
-                .getDataProvider().getGroups();
-        final ImmutableMap<String, UserGroup> groupIndex = Maps.uniqueIndex(groups, new Function<UserGroup, String>() {
+        final DataProvider dataProvider = DashboardUI
+                .getDataProvider();
+        final Collection<UserGroup> groups = dataProvider.getGroups();
+        final ImmutableMap<Integer, UserGroup> groupIndex = Maps.uniqueIndex(groups, new Function<UserGroup, Integer>() {
             @Override
-            public String apply(UserGroup input) {
-                return input.getDescription();
+            public Integer apply(UserGroup input) {
+                return input.getId();
             }
         });
 
@@ -217,19 +221,32 @@ public final class ClientsView extends VerticalLayout implements View {
             @Override
             public Object generateCell(Table source, Object itemId,
                                        Object columnId) {
-                ComboBox combo = new ComboBox();
+                final ComboBox combo = new ComboBox();
                 combo.setSizeFull();
                 combo.addItems(groups);
                 combo.addStyleName("compact");
-                Client client = (Client) itemId;
-                String groupDesc = client.getGroup();
+                combo.setNewItemsAllowed(false);
+                combo.setNullSelectionAllowed(false);
+                final Client localClient = (Client) itemId;
+                int groupDesc = localClient.getGroup();
 
                 UserGroup userGroup = groupIndex.get(groupDesc);
-                if (userGroup!=null) {
+                if (userGroup != null) {
                     combo.select(userGroup);
                 } else {
                     combo.setComponentError(new UserError("Группа не определена!"));
                 }
+                combo.addValueChangeListener(new ValueChangeListener() {
+                    @Override
+                    public void valueChange(ValueChangeEvent event) {
+                        UserGroup selectedUserGroup = (UserGroup) event.getProperty().getValue();
+                        if (selectedUserGroup != null) {
+                            localClient.setGroup(selectedUserGroup.getId());
+                            combo.setComponentError(null);
+                            dataProvider.updateClient(localClient);
+                        }
+                    }
+                });
                 return combo;
             }
         });
@@ -239,14 +256,12 @@ public final class ClientsView extends VerticalLayout implements View {
         Collection<Client> recentClients;
         boolean isAdmin = "admin".equals(user.getRole());
         if (isAdmin) {
-            recentClients = DashboardUI
-                    .getDataProvider().getAllRecentClients();
+            recentClients = dataProvider.getAllRecentClients();
             table.setContainerDataSource(new TempTransactionsContainer(recentClients));
             table.setVisibleColumns(ADMIN_COLUMNS);
             table.setColumnHeaders(ADMIN_NAMES);
         } else {
-            recentClients = DashboardUI
-                    .getDataProvider().getRecentClientsByUser(user);
+            recentClients = dataProvider.getRecentClientsByUser(user);
             table.setContainerDataSource(new TempTransactionsContainer(recentClients));
             table.setVisibleColumns(USER_COLUMNS);
             table.setColumnHeaders(USER_NAMES);
