@@ -17,6 +17,7 @@
     <mappers>
         <mapper resource="user.xml"/>
         <mapper resource="client.xml"/>
+        <mapper resource="mail.xml"/>
     </mappers>
     <!--<properties resource="database.properties"> &lt;!&ndash;ссылка на файл со свойствами(ссылка на СУБД, логин, пароль и тп.)&ndash;&gt;-->
     <!--</properties>-->

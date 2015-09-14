@@ -4,6 +4,7 @@ import com.vaadin.demo.dashboard.domain.Client;
 import com.vaadin.demo.dashboard.domain.ClientStatus;
 import com.vaadin.demo.dashboard.domain.ClientStatusHistory;
 import com.vaadin.demo.dashboard.domain.DashboardNotification;
+import com.vaadin.demo.dashboard.domain.MailConfiguration;
 import com.vaadin.demo.dashboard.domain.User;
 import com.vaadin.demo.dashboard.domain.UserGroup;
 
@@ -21,6 +22,8 @@ public interface DataProvider {
      * @return A Collection of most recent transactions.
      */
     Collection<Client> getRecentClientsByUser(User user);
+
+    boolean insertClient(Client client);
 
     /**
      * @param userName
@@ -51,11 +54,5 @@ public interface DataProvider {
      */
     Collection<DashboardNotification> getNotifications();
 
-    /**
-     * @param startDate
-     * @param endDate
-     * @return A Collection of Transactions between the given start and end
-     *         dates.
-     */
-    Collection<Client> getTransactionsBetween(Date startDate, Date endDate);
+    MailConfiguration getMailConfiguration();
 }

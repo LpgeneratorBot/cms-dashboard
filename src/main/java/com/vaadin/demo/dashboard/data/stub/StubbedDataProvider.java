@@ -5,6 +5,7 @@ import com.vaadin.demo.dashboard.domain.Client;
 import com.vaadin.demo.dashboard.domain.ClientStatus;
 import com.vaadin.demo.dashboard.domain.ClientStatusHistory;
 import com.vaadin.demo.dashboard.domain.DashboardNotification;
+import com.vaadin.demo.dashboard.domain.MailConfiguration;
 import com.vaadin.demo.dashboard.domain.User;
 import com.vaadin.demo.dashboard.domain.UserGroup;
 
@@ -64,6 +65,11 @@ public class StubbedDataProvider implements DataProvider {
     }
 
     @Override
+    public boolean insertClient(Client client) {
+        return true;
+    }
+
+    @Override
     public User authenticate(String userName, String password) {
         return user;
     }
@@ -109,7 +115,7 @@ public class StubbedDataProvider implements DataProvider {
     }
 
     @Override
-    public Collection<Client> getTransactionsBetween(Date startDate, Date endDate) {
-        return clients;
+    public MailConfiguration getMailConfiguration() {
+        return new MailConfiguration();
     }
 }

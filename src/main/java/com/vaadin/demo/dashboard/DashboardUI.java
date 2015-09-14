@@ -1,12 +1,16 @@
 package com.vaadin.demo.dashboard;
 
 import com.google.common.eventbus.Subscribe;
+import com.mail.ClientExtractor;
+import com.mail.MailChecker;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.Title;
 import com.vaadin.annotations.Widgetset;
 import com.vaadin.demo.dashboard.data.DataProvider;
 import com.vaadin.demo.dashboard.data.ibatis.IBatisDataProvider;
 import com.vaadin.demo.dashboard.data.stub.StubbedDataProvider;
+import com.vaadin.demo.dashboard.domain.Client;
+import com.vaadin.demo.dashboard.domain.MailConfiguration;
 import com.vaadin.demo.dashboard.domain.User;
 import com.vaadin.demo.dashboard.event.DashboardEvent.BrowserResizeEvent;
 import com.vaadin.demo.dashboard.event.DashboardEvent.CloseOpenWindowsEvent;
@@ -27,7 +31,12 @@ import com.vaadin.ui.UI;
 import com.vaadin.ui.Window;
 import com.vaadin.ui.themes.ValoTheme;
 
+import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Theme("dashboard")
 @Widgetset("com.vaadin.demo.dashboard.DashboardWidgetSet")
@@ -44,6 +53,7 @@ public final class DashboardUI extends UI {
     private final DataProvider dataProvider = new IBatisDataProvider();
 //    private final DataProvider dataProvider = new StubbedDataProvider();
     private final DashboardEventBus dashboardEventbus = new DashboardEventBus();
+    private ScheduledExecutorService service;
 
     @Override
     protected void init(final VaadinRequest request) {
@@ -65,6 +75,25 @@ public final class DashboardUI extends UI {
                         DashboardEventBus.post(new BrowserResizeEvent());
                     }
                 });
+
+        service = Executors.newSingleThreadScheduledExecutor();
+        MailConfiguration mailConfiguration = dataProvider.getMailConfiguration();
+        final MailChecker checker = new MailChecker();
+        checker.setConfiguration(mailConfiguration);
+        service.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String[] check = checker.check();
+                    List<Client> clients = ClientExtractor.extract(check);
+                    for (Client client : clients) {
+                        dataProvider.insertClient(client);
+                    }
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
+            }
+        }, 1, mailConfiguration.getPeriod(), TimeUnit.MINUTES);
     }
 
     /**

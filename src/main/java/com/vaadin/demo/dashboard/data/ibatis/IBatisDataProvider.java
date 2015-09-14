@@ -5,6 +5,7 @@ import com.vaadin.demo.dashboard.domain.Client;
 import com.vaadin.demo.dashboard.domain.ClientStatus;
 import com.vaadin.demo.dashboard.domain.ClientStatusHistory;
 import com.vaadin.demo.dashboard.domain.DashboardNotification;
+import com.vaadin.demo.dashboard.domain.MailConfiguration;
 import com.vaadin.demo.dashboard.domain.User;
 import com.vaadin.demo.dashboard.domain.UserGroup;
 import org.apache.ibatis.io.Resources;
@@ -52,6 +53,17 @@ public class IBatisDataProvider implements DataProvider {
         try {
             return session.selectList("ClientProvider.getRecentClientsByUser", user);
         } finally {
+            session.close();
+        }
+    }
+
+    @Override
+    public boolean insertClient(Client client) {
+        SqlSession session = sqlSessionFactory.openSession();
+        try {
+            return session.insert("ClientProvider.insertClient", client) > 0;
+        } finally {
+            session.commit();
             session.close();
         }
     }
@@ -149,7 +161,12 @@ public class IBatisDataProvider implements DataProvider {
     }
 
     @Override
-    public Collection<Client> getTransactionsBetween(Date startDate, Date endDate) {
-        return null;
+    public MailConfiguration getMailConfiguration() {
+        SqlSession session = sqlSessionFactory.openSession();
+        try {
+            return session.selectOne("MailProvider.getMailConfiguration");
+        } finally {
+            session.close();
+        }
     }
 }
